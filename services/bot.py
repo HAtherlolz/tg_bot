@@ -25,17 +25,22 @@ class Bot:
             log.info(f"Parsed message: {parsed_msg}")
 
     @staticmethod
-    def message_parser(msg: str) -> List[Dict[str, Union[str, None]]]:
-        res = list()
+    def message_parser(msg: str) -> Dict:
+
+        title = msg.split(" ")[0]
+        title = title[1:-4]
+        log.info(f"title: {title}")
 
         pattern = re.compile(
             r"(?P<country>[A-Z]{2}) - Total (?P<total_caps>\d+) cap - "
             r"(?P<start_time>\d{2}:\d{2}) - (?P<end_time>\d{2}:\d{2})( gmt \+ \d+)?"
         )
 
+        res = {"title": title, "data": []}
+
         for match in pattern.finditer(msg):
 
-            res.append({
+            res["data"].append({
                 "country": match.group("country"),
                 "total_caps": match.group("total_caps"),
                 "start_time": match.group("start_time"),
