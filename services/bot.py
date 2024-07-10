@@ -32,20 +32,21 @@ class Bot:
         log.info(f"title: {title}")
 
         pattern = re.compile(
-            r"(?P<country>[A-Z]{2}) - Total (?P<total_caps>\d+) cap - "
+            r"(?P<country>[A-Z]{2}(?: [A-Z]{2})?) - Total (?P<total_caps>\d+) cap - "
             r"(?P<start_time>\d{2}:\d{2}) - (?P<end_time>\d{2}:\d{2})( gmt \+ \d+)?"
+            r"(?: - (?P<note>[\w\s]+))?"
         )
 
         res = {"title": title, "data": []}
 
         for match in pattern.finditer(msg):
-
             res["data"].append({
                 "country": match.group("country"),
                 "total_caps": match.group("total_caps"),
                 "start_time": match.group("start_time"),
                 "end_time": match.group("end_time"),
-                "time_zone": match.group(5) if match.group(5) else None  # Optional time zone
+                "time_zone": match.group(5) if match.group(5) else None,  # Optional time zone
+                "note": match.group("note").split("\n")[0] if match.group("note") else None  # Optional note
             })
 
         return res
