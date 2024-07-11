@@ -6,7 +6,7 @@ from utils.logs import log
 
 
 def main():
-    log.info("Bot starting ...")
+    log.info("Bot is starting ...")
     app = ApplicationBuilder().token(settings.TG_TOKEN).build()
 
     message_handler = MessageHandler(filters.TEXT & ~filters.COMMAND, Bot.handle_message)
