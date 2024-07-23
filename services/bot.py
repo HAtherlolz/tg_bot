@@ -1,6 +1,5 @@
-import re
-
 from typing import List
+from zoneinfo import ZoneInfo
 
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -19,7 +18,11 @@ class Bot:
         chat_id = update.message.chat_id
         text = update.message.text
 
-        date_time = str(update.message.date)[:16]
+        utc_date_time = update.message.date
+        gmt_plus_3 = ZoneInfo('Etc/GMT-3')  # 'Etc/GMT-3' corresponds to GMT+3
+        local_date_time = utc_date_time.astimezone(gmt_plus_3)
+
+        date_time = local_date_time.strftime('%Y-%m-%d %H:%M')
 
         if text.startswith('#'):
             log.info(f"Message from chat {chat_id}: {text}")
@@ -41,7 +44,8 @@ class Bot:
                 l = [x.strip() for x in line.split("-")]
                 print(l)
                 res_t = {
-                    "date": date_time,
+                    "Message timestamp": date_time,
+                    "Cap day": date_time,
                     "title": title,
                     "country": None,
                     "total_caps": None,
