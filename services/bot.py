@@ -1,6 +1,6 @@
-import re
-
+from datetime import datetime, timedelta
 from typing import List
+from zoneinfo import ZoneInfo
 
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -19,19 +19,32 @@ class Bot:
         chat_id = update.message.chat_id
         text = update.message.text
 
-        date_time = str(update.message.date)[:16]
+        utc_date_time = update.message.date
+        gmt_plus_3 = ZoneInfo('Etc/GMT-3')  # 'Etc/GMT-3' corresponds to GMT+3
+        local_date_time = utc_date_time.astimezone(gmt_plus_3)
+
+        date_time = local_date_time.strftime('%Y-%m-%d %H:%M')
 
         if text.startswith('#'):
             log.info(f"Message from chat {chat_id}: {text}")
             parsed_msg = cls.message_parser(msg=text, date_time=date_time)
-            log.info(f"Parsed message: {parsed_msg}")
+            # log.info(f"Parsed message: {parsed_msg}")
 
             Google.update_sht(parsed_msg)
 
-    @staticmethod
-    def message_parser(msg: str, date_time: str) -> List:
-        res = list()
-        msg = msg.split("\n")
+    @classmethod
+    def message_parser(cls, msg: str, date_time: str) -> List:
+        res: List = list()
+        msg: List = msg.split("\n")
+
+        # Check if the second row contains the word "tomorrow"
+        if len(msg) > 1 and "tomorrow" in msg[1].lower():
+            caps_date = cls.parse_date(date_time, True)
+            log.info("Is for tomorrow?: Yes")
+        else:
+            caps_date = cls.parse_date(date_time, False)
+            log.info("Is for tomorrow?: No")
+
         for line in msg:
             if "#" in line:
                 title = line.strip().lstrip("#")[:-4]
@@ -39,9 +52,9 @@ class Bot:
                 continue
             elif "-" in line:
                 l = [x.strip() for x in line.split("-")]
-                print(l)
                 res_t = {
-                    "date": date_time,
+                    "Message timestamp": date_time,
+                    "Cap day": caps_date,
                     "title": title,
                     "country": None,
                     "total_caps": None,
@@ -72,26 +85,14 @@ class Bot:
                 res.append(res_t)
         return res
 
-        # title = msg.split(" ")[0]
-        # title = title[1:-4]
-        # log.info(f"title: {title}")
-        
-        # pattern = re.compile(
-        #     r"(?P<country>[A-Z]{2}(?: [A-Z]{2})?) - Total (?P<total_caps>\d+) cap"
-        #     r"( - (?P<start_time>\d{2}:\d{2}) - (?P<end_time>\d{2}:\d{2})( gmt \+ \d+)?)?"
-        #     r"( - (?P<cpa>.*))?",
-        #     re.IGNORECASE
-        # )
-
-        # for match in pattern.finditer(msg):
-        #     res.append({
-        #         "date": date_time,
-        #         "title": title,
-        #         "country": match.group("country"),
-        #         "total_caps": match.group("total_caps"),
-        #         "start_time": match.group("start_time"),
-        #         "end_time": match.group("end_time"),
-        #         "time_zone": match.group(5).strip(" ") if match.group(5) else None,  # Optional time zone
-        #         "cpa": match.group("cpa").split("\n")[0].split("-")[0] if match.group("cpa") else None,  # Optional note
-        #         "note": match.group("cpa").split("\n")[0].split("-")[1] if match.group("cpa") else None  # Optional note
-        #     })
+    @staticmethod
+    def parse_date(date_time: str, is_tomorrow: bool) -> str:
+        """
+            Parsing str of datetime to change structure
+            and if it's tomorrow it will add one more day
+        """
+        datetime_obj = datetime.strptime(date_time, "%Y-%m-%d %H:%M")
+        if is_tomorrow:
+            datetime_obj = datetime_obj + timedelta(days=1)
+        new_datetime_str = datetime_obj.strftime("%Y-%m-%d")
+        return new_datetime_str
