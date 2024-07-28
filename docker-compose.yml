@@ -6,5 +6,18 @@ services:
     restart: always
     env_file: .env
     command: sh -c "python main.py"
+    depends_on:
+      - mongo
     volumes:
      - .:/app
+
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:

@@ -14,5 +14,8 @@ class Settings(BaseConfig):
     # GOOGLE SHEETS TOKEN
     GGL_SHEET_TOKEN: str = os.getenv("GGL_SHEET_TOKEN")
 
+    # DATABASE
+    DATABASE_URL: str = "mongodb://mongo:27017/"
+
 
 settings = Settings()
