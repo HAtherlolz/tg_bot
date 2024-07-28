@@ -17,5 +17,8 @@ class Settings(BaseConfig):
     # DATABASE
     DATABASE_URL: str = "mongodb://mongo:27017/"
 
+    # REDIS
+    REDIS_URL: str = "redis://redis/0"
+
 
 settings = Settings()
