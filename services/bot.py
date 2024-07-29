@@ -7,6 +7,10 @@ from telegram.ext import ContextTypes
 
 from utils.logs import log
 from services.google import Google
+from repositories.mongodb import (
+    ChatRepository, MessageRepository,
+    MessageSchema, ChatSchema
+)
 
 
 class Bot:
@@ -22,6 +26,7 @@ class Bot:
         utc_date_time = update.message.date
         gmt_plus_3 = ZoneInfo('Etc/GMT-3')  # 'Etc/GMT-3' corresponds to GMT+3
         local_date_time = utc_date_time.astimezone(gmt_plus_3)
+        print("TIME: ", local_date_time, "TYPE: ", type(local_date_time))
 
         date_time = local_date_time.strftime('%Y-%m-%d %H:%M')
 
@@ -31,6 +36,34 @@ class Bot:
             # log.info(f"Parsed message: {parsed_msg}")
 
             Google.update_sht(parsed_msg)
+
+        chat_id = update.message.chat.id
+        chat_name = update.message.chat.title
+        message_text = update.message.text
+        username = update.message.from_user.username
+
+        # Print data (or save to database)
+        print(f"Chat ID: {chat_id}", "type :", type(chat_id))  # Optional[int]
+        print(f"Chat Name: {chat_name}", "type :", type(chat_name))  # Optional[str]
+        print(f"Message: {message_text}"), "type :", type(message_text)  # Optional[str]
+        print(f"Username: {username}", "type :", type(username))  # Optional[str]
+
+        msg: MessageSchema = MessageSchema(
+            chat_id=chat_id, name=chat_name,
+            message=message_text, username=username,
+            created_at=local_date_time
+        )
+
+        chat: ChatSchema = ChatSchema(
+            chat_id=chat_id, name=chat_name,
+            created_at=local_date_time
+        )
+
+        ChatRepository.create_chat(chat)
+        MessageRepository.create_msg(msg)
+
+        # print(ChatRepository.get_chats_by_id(chat_id))
+        # print(MessageRepository.get_msgs_by_id(chat_id))
 
     @classmethod
     def message_parser(cls, msg: str, date_time: str) -> List:

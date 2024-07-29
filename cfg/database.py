@@ -8,6 +8,7 @@ db_url = settings.DATABASE_URL
 client = MongoClient('mongodb://mongo:27017/')
 db = client["DB"]
 msg_db = db["messages"]
+chat_db = db["chats"]
 
 
 def ping_db():
