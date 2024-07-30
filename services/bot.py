@@ -153,7 +153,7 @@ class Bot:
     @staticmethod
     async def default_buttons(update: Update, context: CallbackContext) -> None:
         query = update.callback_query
-        query.answer()
+        await query.answer()
         if query.data == 'help':
             await Bot.help_command(query, context)
         elif query.data == 'set_moderator':
@@ -170,12 +170,11 @@ class Bot:
     @staticmethod
     async def create_moderator(update: Update, context: CallbackContext) -> None:
         user: UserSchema = UserSchema(
-            username=update.message.from_user.username,
+            username=update.from_user.username,
             chat_id=update.message.chat.id,
             is_moderator=True,
             receive_notifications=True
         )
-        
         UserRepository.create_user(user)
         await update.message.reply_text('You are a moderator now!')
     

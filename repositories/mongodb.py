@@ -24,7 +24,7 @@ class ChatRepository:
             return False
 
         if chat.chat_id < 0:  # Group chats have negative ids
-            cls.db.insert_one(chat)
+            cls.db.insert_one(chat.dict())
             return True
 
         return False
@@ -45,7 +45,7 @@ class MessageRepository:
 
     @classmethod
     def create_msg(cls, msg: MessageSchema) -> bool:
-        cls.db.insert_one(msg)
+        cls.db.insert_one(msg.dict())
         return True
 
     @classmethod
@@ -57,16 +57,24 @@ class MessageRepository:
             last_msgs.append(MessageSchema(**last_msg))
         return last_msgs
 
+    @classmethod
+    def mark_msg_as_notified(cls, msg: MessageSchema) -> None:
+        cls.db.update_one(
+            {"chat_id": msg.chat_id, "created_at": msg.created_at},
+            {"$set": {"is_notified": True}}
+        )
+
 
 class UserRepository:
     db: Collection = user_db
     
     @classmethod
     def create_user(cls, user: UserSchema) -> bool:
-        users = cls.db.find({"username": user.username})
+        users = list(cls.db.find({"username": user.username}))
         if users:
             return False
-        cls.db.insert_one(user)
+
+        cls.db.insert_one(user.dict())
         return True
     
     @classmethod

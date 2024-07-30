@@ -10,3 +10,4 @@ class MessageSchema(BaseModel):
     message: Optional[str]
     username: Optional[str]
     created_at: datetime
+    is_notified: bool = False
