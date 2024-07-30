@@ -4,8 +4,9 @@ from pymongo.collection import Collection
 
 from schemas.chats import ChatSchema
 from schemas.messages import MessageSchema
+from schemas.users import UserSchema
 
-from cfg.database import msg_db, chat_db
+from cfg.database import msg_db, chat_db, user_db
 
 
 class ChatRepository:
@@ -23,10 +24,15 @@ class ChatRepository:
             return False
 
         if chat.chat_id < 0:  # Group chats have negative ids
-            cls.db.insert_one(chat.dict())
+            cls.db.insert_one(chat)
             return True
 
         return False
+    
+    @classmethod
+    def get_all_group_chats(cls) -> List[ChatSchema]:
+        chats = cls.db.find({"chat_id": {"$lt": 0}})
+        return [ChatSchema(**chat) for chat in chats]
 
 
 class MessageRepository:
@@ -39,5 +45,44 @@ class MessageRepository:
 
     @classmethod
     def create_msg(cls, msg: MessageSchema) -> bool:
-        cls.db.insert_one(msg.dict())
+        cls.db.insert_one(msg)
         return True
+
+    @classmethod
+    def get_last_message_from_all_group_chats(cls) -> List[MessageSchema]:
+        last_msgs = []
+        group_chats = ChatRepository.get_all_group_chats()
+        for chat in group_chats:
+            last_msg = cls.db.find_one({"chat_id": chat.chat_id}, sort=[("created_at", -1)])
+            last_msgs.append(MessageSchema(**last_msg))
+        return last_msgs
+
+
+class UserRepository:
+    db: Collection = user_db
+    
+    @classmethod
+    def create_user(cls, user: UserSchema) -> bool:
+        users = cls.db.find({"username": user.username})
+        if users:
+            return False
+        cls.db.insert_one(user)
+        return True
+    
+    @classmethod
+    def get_user_by_username(cls, username: str) -> UserSchema:
+        user = cls.db.find_one({"username": username})
+        return UserSchema(**user)
+
+    @classmethod
+    def get_all_moderators(cls) -> List[UserSchema]:
+        users = cls.db.find({"is_moderator": True})
+        return [UserSchema(**user) for user in users]
+    
+    @classmethod
+    def set_notifications(cls, username: str, receive_notifications: bool) -> bool:
+        user = cls.db.find({"username": username})
+        if user:
+            cls.db.update_one({"username": username}, {"$set": {"receive_notifications": receive_notifications}})
+            return True
+        return False

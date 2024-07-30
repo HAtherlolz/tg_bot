@@ -9,6 +9,7 @@ client = MongoClient('mongodb://mongo:27017/')
 db = client["DB"]
 msg_db = db["messages"]
 chat_db = db["chats"]
+user_db = db["users"]
 
 
 def ping_db():
@@ -18,4 +19,3 @@ def ping_db():
         log.info("Connected to database")
     except Exception as e:
         log.info("Error database connection. ", e)
-

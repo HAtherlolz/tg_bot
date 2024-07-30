@@ -2,14 +2,18 @@ from datetime import datetime, timedelta
 from typing import List
 from zoneinfo import ZoneInfo
 
-from telegram import Update
-from telegram.ext import ContextTypes
+from telegram import Bot as TGBot
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import ContextTypes, CallbackContext
 
 from utils.logs import log
+from cfg.config import settings
 from services.google import Google
+
+from schemas.users import UserSchema
 from repositories.mongodb import (
     ChatRepository, MessageRepository,
-    MessageSchema, ChatSchema
+    MessageSchema, ChatSchema, UserRepository
 )
 
 
@@ -129,3 +133,54 @@ class Bot:
             datetime_obj = datetime_obj + timedelta(days=1)
         new_datetime_str = datetime_obj.strftime("%Y-%m-%d")
         return new_datetime_str
+    
+    @staticmethod
+    async def send_message_to_chat(chat_id: int, message: str) -> None:
+        bot = TGBot(token=settings.TG_TOKEN)
+        await bot.send_message(chat_id=chat_id, text=message)
+    
+    ############### Command handlers ###############
+    @staticmethod
+    async def start(update: Update, context: CallbackContext) -> None:
+        keyboard = [
+            [InlineKeyboardButton("Help", callback_data='help')],
+            [InlineKeyboardButton("I am a moderator", callback_data='set_moderator')],
+            [InlineKeyboardButton("Get all moderators", callback_data='get_all_moderators')],
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text('Hello! I am your bot. How can I assist you today?', reply_markup=reply_markup)
+
+    @staticmethod
+    async def default_buttons(update: Update, context: CallbackContext) -> None:
+        query = update.callback_query
+        query.answer()
+        if query.data == 'help':
+            await Bot.help_command(query, context)
+        elif query.data == 'set_moderator':
+            await Bot.create_moderator(query, context)
+        elif query.data == 'get_all_moderators':
+            await Bot.moderators_list(query, context)
+    
+    @staticmethod
+    async def help_command(update: Update, context: CallbackContext) -> None:
+        await update.message.reply_text(
+            'Here are the available commands:\n/start - Start the bot\n/help - Show help message\n/set_moderator - Make me a moderator\n/get_all_moderators - Get all moderators'
+        )
+
+    @staticmethod
+    async def create_moderator(update: Update, context: CallbackContext) -> None:
+        user: UserSchema = UserSchema(
+            username=update.message.from_user.username,
+            chat_id=update.message.chat.id,
+            is_moderator=True,
+            receive_notifications=True
+        )
+        
+        UserRepository.create_user(user)
+        await update.message.reply_text('You are a moderator now!')
+    
+    @staticmethod
+    async def moderators_list(update: Update, context: CallbackContext) -> None:
+        moderators = UserRepository.get_all_moderators()
+        moderators_list = "\n".join([f"@{mod.username}" for mod in moderators])
+        await update.message.reply_text(f"Moderators:\n{moderators_list}")
