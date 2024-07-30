@@ -14,7 +14,15 @@ def check_msg():
     moderators = UserRepository.get_all_moderators()
     moderators_usernames = [moderator.username for moderator in moderators]
     
+    advertisers = []
     for last_message in last_messages:
         if last_message.created_at < time_delta and not last_message.username in moderators_usernames:
-            for moderator in moderators:
-                Bot.send_message_to_chat(moderator.chat_id, f"A new message is required in the group - {last_message.name}")
+            advertisers.append(f"ADV name {last_message.name}")
+
+    notification_message = (
+        "These are the advertisers that are waiting for a reply:\n" +
+        "\n".join(advertisers)
+    )
+    
+    for moderator in moderators:
+        Bot.send_message_to_chat(moderator.chat_id, notification_message)
