@@ -11,7 +11,7 @@ from repositories.mongodb import MessageRepository, UserRepository, UserSchema
 
 @celery_app.task()
 def check_msg():
-    time_delta = datetime.now() - timedelta(minutes=3)
+    time_delta = datetime.now() - timedelta(minutes=15)
 
     last_messages = MessageRepository.get_last_message_from_all_group_chats()
     moderators = UserRepository.get_all_moderators()
