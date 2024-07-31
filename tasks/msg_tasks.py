@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 from cfg.celery_conf import celery_app
 
-from services.bot import Bot
+from services.bot import Bot, TGBot
 from repositories.mongodb import MessageRepository, UserRepository, UserSchema
 
 
@@ -26,13 +26,19 @@ def check_msg():
                 and
                 (not last_message.is_notified)
         ):
-            advertisers.append(f"ADV name {last_message.name}")
+            advertisers.append({
+                "chat_id": last_message.chat_id,
+                "username": last_message.username,
+                "name": last_message.name,
+            })
             MessageRepository.mark_msg_as_notified(last_message)  # Set msg to notified
 
-    notification_message = (
-        "These are the advertisers that are waiting for a reply:\n" +
-        "\n".join(advertisers)
-    )
+    if advertisers:
+        # Build the notification message
+        notification_message = (
+            "These are the advertisers that are waiting for a reply:\n" +
+            "\n".join(f"- ADV @{adv['username']} from chat - {adv['name']}" for adv in advertisers)
+        )
 
     loop = asyncio.get_event_loop()
     if loop.is_closed():
