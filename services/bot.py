@@ -44,10 +44,10 @@ class Bot:
         message_text = update.message.text
         username = update.message.from_user.username
 
-        # log.info(f"Chat ID: {chat_id}", "type :", type(chat_id))  # Optional[int]
-        # log.info(f"Chat Name: {chat_name}", "type :", type(chat_name))  # Optional[str]
-        # log.info(f"Message: {message_text}"), "type :", type(message_text)  # Optional[str]
-        # log.info(f"Username: {username}", "type :", type(username))  # Optional[str]
+        log.info(f"Chat ID: {chat_id}, type : {type(chat_id)}")  # Optional[int]
+        log.info(f"Chat Name: {chat_name}, type : {type(chat_name)}")  # Optional[str]
+        log.info(f"Message: {message_text}, type : {type(message_text)}")  # Optional[str]
+        log.info(f"Username: {username} ,type :{type(username)}")  # Optional[str]
 
         msg: MessageSchema = MessageSchema(
             chat_id=chat_id, name=chat_name,
@@ -132,8 +132,8 @@ class Bot:
     async def send_message_to_chat(chat_id: int, message: str) -> None:
         bot = TGBot(token=settings.TG_TOKEN)
         await bot.send_message(chat_id=chat_id, text=message)
-    
-    ############### Command handlers ###############
+
+    # ============== Command handlers ===============
     @staticmethod
     async def start(update: Update, context: CallbackContext) -> None:
         keyboard = [
@@ -158,7 +158,11 @@ class Bot:
     @staticmethod
     async def help_command(update: Update, context: CallbackContext) -> None:
         await update.message.reply_text(
-            'Here are the available commands:\n/start - Start the bot\n/help - Show help message\n/set_moderator - Make me a moderator\n/get_all_moderators - Get all moderators'
+            "Here are the available commands:\n"
+            "/start - Start the bot\n"
+            "/help - Show help message\n"
+            "/set_moderator - Make me a moderator\n"
+            "/get_all_moderators - Get all moderators"
         )
 
     @staticmethod

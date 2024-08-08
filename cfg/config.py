@@ -20,5 +20,8 @@ class Settings(BaseConfig):
     # REDIS
     REDIS_URL: str = "redis://redis/0"
 
+    # ADMINS GROUP CHAT NAME
+    ADMINS_GROUP_CHAT_NAME: str = os.getenv("ADMINS_GROUP_CHAT_NAME")
+
 
 settings = Settings()

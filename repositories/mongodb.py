@@ -6,6 +6,7 @@ from schemas.chats import ChatSchema
 from schemas.messages import MessageSchema
 from schemas.users import UserSchema
 
+from cfg.config import settings
 from cfg.database import msg_db, chat_db, user_db
 
 
@@ -33,6 +34,14 @@ class ChatRepository:
     def get_all_group_chats(cls) -> List[ChatSchema]:
         chats = cls.db.find({"chat_id": {"$lt": 0}})
         return [ChatSchema(**chat) for chat in chats]
+
+    @classmethod
+    def get_admins_chat_id(cls) -> int:
+        chat = cls.db.find_one({"name": settings.ADMINS_GROUP_CHAT_NAME})
+        if not chat:
+            return 0
+
+        return chat.get("chat_id")
 
 
 class MessageRepository:
