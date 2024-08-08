@@ -9,7 +9,10 @@ from cfg.celery_conf import celery_app
 from utils.logs import log
 
 from services.bot import Bot, TGBot
-from repositories.mongodb import MessageRepository, UserRepository, UserSchema
+from repositories.mongodb import (
+    ChatRepository, MessageRepository,
+    UserRepository, UserSchema
+)
 
 
 @celery_app.task()
@@ -19,6 +22,8 @@ def check_msg():
     last_messages = MessageRepository.get_last_message_from_all_group_chats()
     moderators = UserRepository.get_all_moderators()
     moderators_usernames = [moderator.username for moderator in moderators]
+
+    moderators_group_chat = ChatRepository.get_admins_chat_id()
     
     advertisers = []
     for last_message in last_messages:
@@ -49,11 +54,12 @@ def check_msg():
         asyncio.set_event_loop(loop)
 
     if advertisers:
-        loop.run_until_complete(send_msg_to_moderators(moderators, notification_message))
+        loop.run_until_complete(send_msg_to_moderators(moderators, moderators_group_chat, notification_message))
 
 
 async def send_msg_to_moderators(
         moderators: List[UserSchema],
+        moderators_group_chat: int,
         notification_message: str
 ) -> None:
     for moderator in moderators:
@@ -68,3 +74,15 @@ async def send_msg_to_moderators(
                 moderator.chat_id, notification_message
             )
 
+    try:
+        await Bot.send_message_to_chat(
+            moderators_group_chat, notification_message
+        )
+    except TimedOut as e:
+        log.info("Error: ", e)
+        log.info("Retrying ...: ", e)
+        await Bot.send_message_to_chat(
+            moderators_group_chat, notification_message
+        )
+    except BaseException as e:
+        log.info("Base Exception Error: ", e)
