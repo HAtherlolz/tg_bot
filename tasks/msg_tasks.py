@@ -30,8 +30,8 @@ def check_msg():
         if (
                 # (last_message.created_at < time_delta)
                 # and
-                (last_message.username not in moderators_usernames)
-                and
+                # (last_message.username not in moderators_usernames)
+                # and
                 (not last_message.is_notified)
         ):
             advertisers.append({
@@ -62,27 +62,27 @@ async def send_msg_to_moderators(
         moderators_group_chat: int,
         notification_message: str
 ) -> None:
-    for moderator in moderators:
-        try:
-            await Bot.send_message_to_chat(
-                moderator.chat_id, notification_message
-            )
-        except TimedOut as e:
-            log.info("Error: ", e)
-            log.info("Retrying ...: ", e)
-            await Bot.send_message_to_chat(
-                moderator.chat_id, notification_message
-            )
-
+    # for moderator in moderators:
+    #     try:
+    #         await Bot.send_message_to_chat(
+    #             moderator.chat_id, notification_message
+    #         )
+    #     except TimedOut as e:
+    #         log.info("Error: ", e)
+    #         log.info("Retrying ...: ", e)
+    #         await Bot.send_message_to_chat(
+    #             moderator.chat_id, notification_message
+    #         )
+    log.info(f"CHAT ID = {moderators_group_chat}")
     try:
         await Bot.send_message_to_chat(
             moderators_group_chat, notification_message
         )
     except TimedOut as e:
-        log.info("Error: ", e)
-        log.info("Retrying ...: ", e)
+        log.info(f"Error: {e}")
+        log.info(f"Retrying ...: {e}")
         await Bot.send_message_to_chat(
             moderators_group_chat, notification_message
         )
     except BaseException as e:
-        log.info("Base Exception Error: ", e)
+        log.info(f"Base Exception Error: {e}")
