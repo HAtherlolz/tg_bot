@@ -14,7 +14,8 @@ from repositories.mongodb import MessageRepository, UserRepository, UserSchema
 
 @celery_app.task()
 def check_msg():
-    # time_delta = datetime.now() - timedelta(minutes=15)
+    time_delta = datetime.now() - timedelta(minutes=1)
+    log.info(f"time_delta, {time_delta}")
 
     last_messages = MessageRepository.get_last_message_from_all_group_chats()
     moderators = UserRepository.get_all_moderators()
@@ -22,12 +23,21 @@ def check_msg():
     
     advertisers = []
     for last_message in last_messages:
+        first_name = last_message.first_name if last_message.first_name else ''
+        last_name = last_message.last_name if last_message.last_name else ''
+
         if (
-                # (last_message.created_at < time_delta)
-                # and
+                (last_message.created_at < time_delta)
+                and
                 (last_message.username not in moderators_usernames)
                 and
                 (not last_message.is_notified)
+                and
+                (
+                    ("stark" not in first_name.lower())
+                    and
+                    (last_name.lower() != "stark")
+                )
         ):
             advertisers.append({
                 "chat_id": last_message.chat_id,

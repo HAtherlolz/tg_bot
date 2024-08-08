@@ -43,6 +43,8 @@ class Bot:
         chat_name = update.message.chat.title
         message_text = update.message.text
         username = update.message.from_user.username
+        first_name = getattr(update.message.from_user, 'first_name', None)
+        last_name = getattr(update.message.from_user, 'last_name', None)
 
         # log.info(f"Chat ID: {chat_id}", "type :", type(chat_id))  # Optional[int]
         # log.info(f"Chat Name: {chat_name}", "type :", type(chat_name))  # Optional[str]
@@ -52,7 +54,8 @@ class Bot:
         msg: MessageSchema = MessageSchema(
             chat_id=chat_id, name=chat_name,
             message=message_text, username=username,
-            created_at=local_date_time
+            created_at=local_date_time, first_name=first_name,
+            last_name=last_name
         )
 
         chat: ChatSchema = ChatSchema(
