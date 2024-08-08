@@ -44,10 +44,10 @@ class Bot:
         message_text = update.message.text
         username = update.message.from_user.username
 
-        log.info(f"Chat ID: {chat_id}", "type :", type(chat_id))  # Optional[int]
-        log.info(f"Chat Name: {chat_name}", "type :", type(chat_name))  # Optional[str]
-        log.info(f"Message: {message_text}"), "type :", type(message_text)  # Optional[str]
-        log.info(f"Username: {username}", "type :", type(username))  # Optional[str]
+        # log.info(f"Chat ID: {chat_id}", "type :", type(chat_id))  # Optional[int]
+        # log.info(f"Chat Name: {chat_name}", "type :", type(chat_name))  # Optional[str]
+        # log.info(f"Message: {message_text}"), "type :", type(message_text)  # Optional[str]
+        # log.info(f"Username: {username}", "type :", type(username))  # Optional[str]
 
         msg: MessageSchema = MessageSchema(
             chat_id=chat_id, name=chat_name,
