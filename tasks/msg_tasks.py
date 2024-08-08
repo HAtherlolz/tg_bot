@@ -3,7 +3,10 @@ import asyncio
 from typing import List
 from datetime import datetime, timedelta
 
+from telegram.error import TimedOut
+
 from cfg.celery_conf import celery_app
+from utils.logs import log
 
 from services.bot import Bot, TGBot
 from repositories.mongodb import MessageRepository, UserRepository, UserSchema
@@ -11,7 +14,7 @@ from repositories.mongodb import MessageRepository, UserRepository, UserSchema
 
 @celery_app.task()
 def check_msg():
-    time_delta = datetime.now() - timedelta(minutes=15)
+    # time_delta = datetime.now() - timedelta(minutes=15)
 
     last_messages = MessageRepository.get_last_message_from_all_group_chats()
     moderators = UserRepository.get_all_moderators()
@@ -20,8 +23,8 @@ def check_msg():
     advertisers = []
     for last_message in last_messages:
         if (
-                (last_message.created_at < time_delta)
-                and
+                # (last_message.created_at < time_delta)
+                # and
                 (last_message.username not in moderators_usernames)
                 and
                 (not last_message.is_notified)
@@ -54,6 +57,14 @@ async def send_msg_to_moderators(
         notification_message: str
 ) -> None:
     for moderator in moderators:
-        await Bot.send_message_to_chat(
-            moderator.chat_id, notification_message
-        )
+        try:
+            await Bot.send_message_to_chat(
+                moderator.chat_id, notification_message
+            )
+        except TimedOut as e:
+            log.info("Error: ", e)
+            log.info("Retrying ...: ", e)
+            await Bot.send_message_to_chat(
+                moderator.chat_id, notification_message
+            )
+
