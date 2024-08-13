@@ -40,10 +40,12 @@ class Google:
         sht = gc.open_by_key(settings.GGL_SHEET_TOKEN)
         
         caps_date = data[0].get("Cap day")
-        if datetime.today() > datetime.strptime(caps_date, "%Y-%m-%d"):
+        if datetime.today() < datetime.strptime(caps_date, "%Y-%m-%d"):
             caps_tomorrow = True
+            print("Caps for tomorrow")
         else:
             caps_tomorrow = False
+            print("Caps for today")
 
         # Generate the worksheet name based on the current day and date
         sheet_name = cls._get_ggl_sheet_name(caps_tomorrow)
