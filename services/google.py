@@ -38,17 +38,28 @@ class Google:
     def update_sht(cls, data: List):
         gc = gspread.service_account(filename='tg-bot-token.json')
         sht = gc.open_by_key(settings.GGL_SHEET_TOKEN)
+        
+        caps_date = data[0].get("Cap day")
+        if datetime.today() < datetime.strptime(caps_date, "%Y-%m-%d"):
+            caps_tomorrow = True
+            print("Caps for tomorrow")
+        else:
+            caps_tomorrow = False
+            print("Caps for today")
 
         # Generate the worksheet name based on the current day and date
-        sheet_name = cls._get_ggl_sheet_name()
+        sheet_name = cls._get_ggl_sheet_name(caps_tomorrow)
         worksheet = cls.get_or_create_worksheet(sht, sheet_name)
 
         for row in data:
             worksheet.append_row(list(row.values()))
 
     @classmethod
-    def _get_ggl_sheet_name(cls) -> str:
-        today = datetime.today()
+    def _get_ggl_sheet_name(cls, caps_tomorrow: bool) -> str:
+        if caps_tomorrow:
+            today = datetime.today() + timedelta(days=1)
+        else:
+            today = datetime.today()
 
         start_of_week = today - timedelta(days=today.weekday())
         end_of_week = start_of_week + timedelta(days=6)
