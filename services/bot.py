@@ -16,6 +16,11 @@ class Bot:
             update: Update,
             context: ContextTypes.DEFAULT_TYPE,
     ) -> None:
+
+        if update.message is None:
+            log.info("Received an update without message")
+            return
+
         chat_id = update.message.chat_id
         text = update.message.text
 
