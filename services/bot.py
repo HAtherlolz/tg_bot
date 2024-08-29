@@ -74,9 +74,9 @@ class Bot:
                         res_t["country"] = i.strip()
                     elif "Total" in i or "total" in i:
                         res_t["total_caps"] = i.split(" ")[1]
-                    elif (":" in i or "." in i) and "gmt" not in i.lower():
+                    elif (":" in i or "." in i or ";" in i) and "gmt" not in i.lower():
                         res_t["start_time"] = i.strip()
-                    elif (":" in i or "." in i) and "gmt" in i.lower():
+                    elif (":" in i or "." in i or ";" in i) and "gmt" in i.lower():
                         res_t["end_time"] = i.strip().split(" ", 1)[0]
                         res_t["time_zone"] = i.strip().split(" ", 1)[1]
                     elif res_t.get("time_zone") is not None and i == l[-2]:
