@@ -7,9 +7,11 @@ from utils.logs import log
 
 def start_bot():
     try:
-        app = ApplicationBuilder().token(settings.TG_TOKEN).read_timeout(7).get_updates_read_timeout(42).build()
+        app = ApplicationBuilder().token(settings.TG_TOKEN).read_timeout(10).get_updates_read_timeout(50).build()
         message_handler = MessageHandler(filters.TEXT & ~filters.COMMAND, Bot.handle_message)
         app.add_handler(message_handler)
+        
+        app.add_error_handler(Bot.error_handler)
 
         log.info("Bot is running and listening")
         app.run_polling()

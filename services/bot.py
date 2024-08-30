@@ -1,15 +1,20 @@
+import asyncio
 from datetime import datetime, timedelta
 from typing import List
 from zoneinfo import ZoneInfo
 
 from telegram import Update
-from telegram.ext import ContextTypes
+from telegram.ext import ContextTypes, CallbackContext
+from telegram.error import NetworkError
 
 from utils.logs import log
 from services.google import Google
 
 
 class Bot:
+    MAX_RETRIES = 3  # Set the maximum number of retries
+    RETRY_DELAY = 5  # Delay between retries in seconds
+
     @classmethod
     async def handle_message(
             cls,
@@ -31,7 +36,7 @@ class Bot:
         date_time = local_date_time.strftime('%Y-%m-%d %H:%M')
 
         if text.startswith('#'):
-            log.info(f"Message from chat {chat_id}: {text}")
+            log.info(f"Message from chat {chat_id}: \n{text}\n---------------------")
             parsed_msg = cls.message_parser(msg=text, date_time=date_time)
             # log.info(f"Parsed message: {parsed_msg}")
 
@@ -101,3 +106,27 @@ class Bot:
             datetime_obj = datetime_obj + timedelta(days=1)
         new_datetime_str = datetime_obj.strftime("%Y-%m-%d")
         return new_datetime_str
+
+    @staticmethod
+    async def error_handler(update: object, context: CallbackContext):
+        """Log the error and handle it gracefully."""
+        log.error(f"ERROR HANDLER! An error occurred: {context.error}")
+        
+        # Handle specific network errors
+        if isinstance(context.error, NetworkError):
+            log.warning("A network error occurred. Attempting retries...")
+
+            # Retrieve the update and context from the failed attempt
+            update = context.update
+
+            for attempt in range(1, Bot.MAX_RETRIES + 1):
+                try:
+                    await Bot.handle_message(update, context)
+                    log.info(f"Retry attempt {attempt} successful.")
+                    break
+                except NetworkError as e:
+                    log.warning(f"Retry attempt {attempt} failed: {e}")
+                    if attempt == Bot.MAX_RETRIES:
+                        log.error("Max retries reached. Could not recover from the network error.")
+                    else:
+                        await asyncio.sleep(Bot.RETRY_DELAY)
