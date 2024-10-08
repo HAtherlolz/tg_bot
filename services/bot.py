@@ -21,29 +21,59 @@ class Bot:
             update: Update,
             context: ContextTypes.DEFAULT_TYPE,
     ) -> None:
+        if update.edited_message is not None:
+            log.info(f"Received update with ID: {update.update_id}")
+            log.info(f"Updated message: {update.edited_message.text}")
+            
+            chat_id = update.edited_message.chat_id
+            message_id = update.edited_message.message_id
+            text = update.edited_message.text
+            
+            utc_date_time = update.edited_message.date
+            gmt_plus_3 = ZoneInfo('Etc/GMT-3')  # 'Etc/GMT-3' corresponds to GMT+3
+            local_date_time = utc_date_time.astimezone(gmt_plus_3)
 
-        if update.message is None:
-            log.info("Received an update without message")
-            return
+            date_time = local_date_time.strftime('%Y-%m-%d %H:%M')
 
-        chat_id = update.message.chat_id
-        text = update.message.text
+            if text.startswith('#'):
+                log.info(f"Message from chat {chat_id}: \n{text}\n---------------------")
+                parsed_msg = cls.message_parser(
+                    msg=text,
+                    date_time=date_time,
+                    message_id=message_id
+                )
+                # log.info(f"Parsed message: {parsed_msg}")
 
-        utc_date_time = update.message.date
-        gmt_plus_3 = ZoneInfo('Etc/GMT-3')  # 'Etc/GMT-3' corresponds to GMT+3
-        local_date_time = utc_date_time.astimezone(gmt_plus_3)
+                Google.update_row_in_sht(parsed_msg)
+        
+        else:
+            if update.message is None:
+                log.info("Received an update without message")
+                return
 
-        date_time = local_date_time.strftime('%Y-%m-%d %H:%M')
+            chat_id = update.message.chat_id
+            message_id = update.message.message_id
+            text = update.message.text
 
-        if text.startswith('#'):
-            log.info(f"Message from chat {chat_id}: \n{text}\n---------------------")
-            parsed_msg = cls.message_parser(msg=text, date_time=date_time)
-            # log.info(f"Parsed message: {parsed_msg}")
+            utc_date_time = update.message.date
+            gmt_plus_3 = ZoneInfo('Etc/GMT-3')  # 'Etc/GMT-3' corresponds to GMT+3
+            local_date_time = utc_date_time.astimezone(gmt_plus_3)
 
-            Google.update_sht(parsed_msg)
+            date_time = local_date_time.strftime('%Y-%m-%d %H:%M')
+
+            if text.startswith('#'):
+                log.info(f"Message from chat {chat_id}: \n{text}\n---------------------")
+                parsed_msg = cls.message_parser(
+                    msg=text,
+                    date_time=date_time,
+                    message_id=message_id
+                )
+                # log.info(f"Parsed message: {parsed_msg}")
+
+                Google.update_sht(parsed_msg)
 
     @classmethod
-    def message_parser(cls, msg: str, date_time: str) -> List:
+    def message_parser(cls, msg: str, date_time: str, message_id: str) -> List:
         res: List = list()
         msg: List = msg.split("\n")
 
@@ -72,7 +102,8 @@ class Bot:
                     "end_time": None,
                     "time_zone": None,
                     "cpa": None,
-                    "note": None
+                    "note": None,
+                    "message_id": message_id
                 }
                 for i in l:
                     if i == l[0] and ("Total" not in i or "total" not in i):

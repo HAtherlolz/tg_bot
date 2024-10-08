@@ -29,7 +29,7 @@ class Google:
             # Adding titles to the newly created worksheet
             titles = [
                 "Message timestamp", "Cap day", "Affiliate Name", "GEO", "CAP",
-                "Start Time", "End Time", "GMT", "CPA Cost", "Notes"
+                "Start Time", "End Time", "GMT", "CPA Cost", "Notes", "message_id"
             ]
             worksheet.append_row(titles)
         return worksheet
@@ -53,6 +53,31 @@ class Google:
 
         for row in data:
             worksheet.append_row(list(row.values()))
+    
+    @classmethod
+    def update_row_in_sht(cls, data: List):
+        gc = gspread.service_account(filename='tg-bot-token.json')
+        sht = gc.open_by_key(settings.GGL_SHEET_TOKEN)
+        
+        # Get all the worksheets in the spreadsheet
+        sheets = sht.worksheets()
+
+        # Loop through the sheets in reverse order
+        log.info(f"DATA: {data}")
+        
+        for sheet in reversed(sheets):
+            log.info(f"Sheet: {sheet.title}")
+            try:
+                # Find all cells containing the message_id in column K (11)
+                cells = sheet.findall(str(data[0].get('message_id')), in_column=11)
+                if cells and len(cells) == len(data):
+                    cell_counter = 0
+                    for cell in cells:
+                        sheet.update(f'A{cell.row}:K{cell.row}', [list(data[cell_counter].values())])
+                        cell_counter += 1
+                break
+            except Exception as e:
+                log.error(f"Error processing sheet {sheet.title}: {e}")
 
     @classmethod
     def _get_ggl_sheet_name(cls, caps_tomorrow: bool) -> str:
